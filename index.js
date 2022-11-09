@@ -29,6 +29,29 @@ app.get('/participants', (req, res) => {
     })
 })
 
-app.listen(4000, () => {
-    console.log(`Server running in port: ${4000}`);
+app.post('/participants', (req, res) => {
+    const { name } = req.body
+    if (!name || name.length === 0) {
+        res.sendStatus(422)
+        return
+    }
+
+    db.collection("participants")
+    .find()
+    .toArray()
+    .then((participants) => {
+        res.send(participants)
+    })
+
+    const user = {
+        name,
+        lastStatus: Date.now()
+    }
+
+    console.log(user)
+    //res.sendStatus(201)
+})
+
+app.listen(6000, () => {
+    console.log(`Server running in port: ${6000}`);
   });
