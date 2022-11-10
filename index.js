@@ -46,16 +46,13 @@ app.post('/participants', async (req, res) => {
             return
         }
 
-        db.collection("participants").insertOne({
+        const user = {
             name,
             lastStatus: Date.now()
-        })
-    })
+        }
 
-    const user = {
-        name,
-        lastStatus: Date.now()
-    }
+        db.collection("participants").insertOne(user)
+    })
 
     res.sendStatus(201)
 })
