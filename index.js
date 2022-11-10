@@ -52,9 +52,10 @@ app.post('/participants', async (req, res) => {
         }
 
         db.collection("participants").insertOne(user)
-    })
+        res.sendStatus(201)
+    }).catch(err = console.log(err))
 
-    res.sendStatus(201)
+    
 })
 
 app.listen(6000, () => {
