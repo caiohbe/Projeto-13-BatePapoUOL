@@ -29,7 +29,7 @@ app.get('/participants', (req, res) => {
     })
 })
 
-app.post('/participants', (req, res) => {
+app.post('/participants', async (req, res) => {
     const { name } = req.body
     if (!name || name.length === 0) {
         res.sendStatus(422)
@@ -40,7 +40,16 @@ app.post('/participants', (req, res) => {
     .find()
     .toArray()
     .then((participants) => {
-        res.send(participants)
+        const found = participants.find((p) => p.name === name)
+        if (found) {
+            res.status(409).send({ error: "Usuário já existe." })
+            return
+        }
+
+        db.collection("participants").insertOne({
+            name,
+            lastStatus: Date.now()
+        })
     })
 
     const user = {
@@ -48,8 +57,7 @@ app.post('/participants', (req, res) => {
         lastStatus: Date.now()
     }
 
-    console.log(user)
-    //res.sendStatus(201)
+    res.sendStatus(201)
 })
 
 app.listen(6000, () => {
