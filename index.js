@@ -1,12 +1,11 @@
-import express, { query } from 'express'
+import express from 'express'
 import cors from 'cors'
 import joi from 'joi'
 import { MongoClient } from 'mongodb'
 import dayjs from 'dayjs'
 
-const app = express()
-
 // Configs
+const app = express()
 app.use(cors())
 app.use(express.json())
 const mongoClient = new MongoClient("mongodb://localhost:27017")
@@ -74,8 +73,7 @@ app.get('/participants', async (req, res) => {
         const participants = await db.collection("participants").find().toArray()
         res.send(participants)
     } catch (err) {
-        console.log(err)
-        res.sendStatus(500)
+        res.status(500).send(err)
     }
 })
 
@@ -104,7 +102,7 @@ app.post('/messages', async (req, res) => {
         }
         
     } catch (err) {
-        console.log(err)
+        res.status(500).send(err)
     }
 
     try {
@@ -119,7 +117,7 @@ app.post('/messages', async (req, res) => {
         db.collection("messages").insertOne(message )
         res.sendStatus(200)
     } catch (err) {
-        
+        res.status(500).send(err)
     }
 })
 
@@ -137,7 +135,7 @@ app.get('/messages', async (req, res) => {
             }
         })
     } catch (err) {
-        console.log(err)
+        res.status(500).send(err)
     }
 
     if (!limit) {
@@ -148,6 +146,29 @@ app.get('/messages', async (req, res) => {
 
 })
 
+app.post('/status', async (req, res) => {
+    const { user } = req.headers
+    console.log(user)
+
+    try {
+        const participants = await db.collection("participants").find().toArray()
+
+        if (!participants.find(p => p.name === user)) {
+            res.sendStatus(404)
+            return
+        }
+
+        await db.collection("participants").updateOne(
+            { name: user },
+            { $set: { lastStatus: Date.now() } }
+        )
+        res.sendStatus(200)
+
+    } catch (err) {
+        res.status(500).send(err.message)
+    }
+})
+
 app.listen(5000, () => {
     console.log(`Server running in port: ${5000}`);
-  });
+});
