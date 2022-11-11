@@ -41,7 +41,7 @@ app.post('/participants', async (req, res) => {
 
     if (validation.error) {
         const errors = validation.error.details.map(detail => detail.message)
-        res.sendStatus(422).send(errors)
+        res.status(422).send(errors)
         return
     }
     
