@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import joi from 'joi'
 import { MongoClient } from 'mongodb'
 
 const app = express()
@@ -16,6 +17,10 @@ mongoClient.connect()
     })
     .catch(err => console.log(err))
 
+const userSchema = joi.object({
+    name: joi.string().required()
+})
+
 app.get('/participants', (req, res) => {
     db.collection("participants")
     .find()
@@ -30,9 +35,13 @@ app.get('/participants', (req, res) => {
 })
 
 app.post('/participants', async (req, res) => {
-    const { name } = req.body
-    if (!name || name.length === 0) {
-        res.sendStatus(422)
+    const user = req.body
+
+    const validation = userSchema.validate(user, {abortEarly: false})
+
+    if (validation.error) {
+        const errors = validation.error.details.map(detail => detail.message)
+        res.sendStatus(422).send(errors)
         return
     }
 
