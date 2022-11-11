@@ -126,29 +126,26 @@ app.post('/messages', async (req, res) => {
 app.get('/messages', async (req, res) => {
     const { limit } = req.query
     const user = req.headers.user
-
-    if (!limit) {
-        try {
-            const messages = await db.collection("messages").find().toArray()
-            const filteredMessages = messages.filter((msg) => {
-                if (msg.to === "Todos" || msg.to === user || msg.from === user) {
-                    return true
-                }
-            })
-            res.send(filteredMessages)
-            return
-        } catch (err) {
-            console.log(err)
-        }
-    } 
+    let messages
+    let filteredMessages
 
     try {
-        const messages = await db.collection("messages").find().toArray()
-        res.send(messages)
+        messages = await db.collection("messages").find().toArray()
+        filteredMessages = messages.filter((msg) => {
+            if (msg.to === "Todos" || msg.to === user || msg.from === user) {
+                return true
+            }
+        })
     } catch (err) {
         console.log(err)
-        res.sendStatus(500)
     }
+
+    if (!limit) {
+        res.send(filteredMessages)
+    } 
+
+    res.send(filteredMessages.slice(-limit))
+
 })
 
 app.listen(5000, () => {
