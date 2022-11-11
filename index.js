@@ -11,14 +11,16 @@ app.use(express.json())
 const mongoClient = new MongoClient("mongodb://localhost:27017")
 let db
 
-mongoClient.connect()
-    .then(() => {
+try {
+    await mongoClient.connect()
     db = mongoClient.db("")
-    })
-    .catch(err => console.log(err))
+} catch (err) {
+    console.log(err)
+}
 
 const userSchema = joi.object({
-    name: joi.string().required()
+    name: joi.string().required(),
+    lastStatus: joi.number().required()
 })
 
 app.get('/participants', (req, res) => {
@@ -44,29 +46,22 @@ app.post('/participants', async (req, res) => {
         res.sendStatus(422).send(errors)
         return
     }
-
-    db.collection("participants")
-    .find()
-    .toArray()
-    .then((participants) => {
-        const found = participants.find((p) => p.name === name)
+    
+    try {
+        const participants = await db.collection("participants").find().toArray()
+        const found = participants.find((p) => p.name === user.name)
         if (found) {
             res.status(409).send({ error: "Usuário já existe." })
             return
         }
 
-        const user = {
-            name,
-            lastStatus: Date.now()
-        }
-
         db.collection("participants").insertOne(user)
         res.sendStatus(201)
-    }).catch(err = console.log(err))
-
-    
+    } catch (err) {
+        res.sendStatus(500).send(err)
+    }    
 })
 
-app.listen(6000, () => {
-    console.log(`Server running in port: ${6000}`);
+app.listen(5000, () => {
+    console.log(`Server running in port: ${5000}`);
   });
