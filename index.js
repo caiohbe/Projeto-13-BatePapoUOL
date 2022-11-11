@@ -116,8 +116,8 @@ app.post('/messages', async (req, res) => {
             time: dayjs(Date.now()).format('HH:mm:ss')
         }
 
-        db.collection("messages").insertOne(message)
-        res.status(200).send('criou')
+        db.collection("messages").insertOne(message )
+        res.sendStatus(200)
     } catch (err) {
         
     }
@@ -125,7 +125,22 @@ app.post('/messages', async (req, res) => {
 
 app.get('/messages', async (req, res) => {
     const { limit } = req.query
-    console.log(limit)
+    const user = req.headers.user
+
+    if (!limit) {
+        try {
+            const messages = await db.collection("messages").find().toArray()
+            const filteredMessages = messages.filter((msg) => {
+                if (msg.to === "Todos" || msg.to === user || msg.from === user) {
+                    return true
+                }
+            })
+            res.send(filteredMessages)
+            return
+        } catch (err) {
+            console.log(err)
+        }
+    } 
 
     try {
         const messages = await db.collection("messages").find().toArray()
