@@ -1,14 +1,16 @@
 import express from 'express'
 import cors from 'cors'
 import joi from 'joi'
-import { MongoClient } from 'mongodb'
+import dotenv from 'dotenv'
+import { MongoClient, ObjectId } from 'mongodb'
 import dayjs from 'dayjs'
 
 // Configs
 const app = express()
 app.use(cors())
 app.use(express.json())
-const mongoClient = new MongoClient("mongodb://localhost:27017")
+dotenv.config()
+const mongoClient = new MongoClient(process.env.MONGO_URI)
 let db
 
 try {
@@ -114,7 +116,7 @@ app.post('/messages', async (req, res) => {
             time: dayjs(Date.now()).format('HH:mm:ss')
         }
 
-        db.collection("messages").insertOne(message )
+        db.collection("messages").insertOne(message)
         res.sendStatus(200)
     } catch (err) {
         res.status(500).send(err)
@@ -148,7 +150,6 @@ app.get('/messages', async (req, res) => {
 
 app.post('/status', async (req, res) => {
     const { user } = req.headers
-    console.log(user)
 
     try {
         const participants = await db.collection("participants").find().toArray()
@@ -168,6 +169,26 @@ app.post('/status', async (req, res) => {
         res.status(500).send(err.message)
     }
 })
+
+setInterval(() => {
+    const participants = db.collection("participants").find().toArray()
+    participants.then((participants) => {
+        participants.forEach((p) => {
+            if (Date.now() - p.lastStatus > 10000) {
+                db.collection("participants").deleteOne({ _id: ObjectId(p._id) })
+                const message = {
+                    from: p.name,
+                    to: 'Todos',
+                    text: 'sai da sala...',
+                    type: 'status',
+                    time: dayjs(Date.now()).format('HH:mm:ss')
+                }
+
+                db.collection("messages").insertOne(message)
+            }
+        })
+    })
+}, 15000)
 
 app.listen(5000, () => {
     console.log(`Server running in port: ${5000}`);
